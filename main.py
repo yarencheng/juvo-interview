@@ -2,6 +2,7 @@ from selenium import webdriver
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from logger import logger
 import time
+import csv
 
 def get_driver():
     url = 'http://selenium:4444/wd/hub'
@@ -164,6 +165,14 @@ def main():
                 "price": price
             })
 
+    ##
+    ## Dump to csv
+    ##
 
 if __name__ == "__main__":
-    main()
+    # main()
+    with open('result.csv', 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(['姓名', '身高', '體重'])
+        writer.writerow(['令狐沖', 175, 60])
+        writer.writerow(['岳靈珊', 165, 57])
