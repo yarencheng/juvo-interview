@@ -7,4 +7,5 @@ RUN pip3 install selenium
 WORKDIR /workdir
 COPY main.py .
 COPY logger.py .
+ENV PYTHONIOENCODING=utf-8
 ENTRYPOINT [ "python3", "main.py" ]
