@@ -73,8 +73,8 @@ def main():
             link = site.find_element_by_css_selector("*").get_attribute("href")
 
             layer_2_info.append({
-                "parent": layer_1_category["name"],
-                "name": title.text,
+                "parent": layer_1_category,
+                "name": site.text,
                 "element": site,
                 "link": link,
             })
@@ -155,31 +155,29 @@ def main():
         items = driver.find_elements_by_class_name("wrap")
         for item in items:
             title = item.find_element_by_class_name("srp-pdtitle")
-            price = item.find_element_by_xpath("//span[@class='srp-listprice-class']")
 
-            logger.info("Item: [%s] [%s] [%s]", layer_4_category["name"], title.text, price.text)
+            logger.info("Item: [%s] [%s]", layer_4_category["name"], title.text)
 
             item_info.append({
                 "parent": layer_4_category,
-                "name": title,
-                "price": price
+                "name": title.text
             })
 
     ##
     ## Dump to csv
     ##
     logger.info("dump to output.csv")
-    with open('output/output.csv', 'w', newline='') as csvfile:
+    with open('output/output.csv', 'w', encoding='utf-8', newline='') as csvfile:
         writer = csv.writer(csvfile)
-        writer.writerow(['category_1', 'category_2', 'category_3', 'category_4', 'item', 'price'])
+        writer.writerow(['category_1', 'category_2', 'category_3', 'category_4', 'item'])
+
         for item in item_info:
             writer.writerow([
                 item["parent"]["parent"]["parent"]["parent"]["name"],
                 item["parent"]["parent"]["parent"]["name"],
                 item["parent"]["parent"]["name"],
                 item["parent"]["name"],
-                item["name"],
-                item["price"]
+                item["name"]
             ])
 
 
