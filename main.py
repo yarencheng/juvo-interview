@@ -3,6 +3,7 @@ from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from logger import logger
 import time
 import csv
+import datetime
 
 def get_driver():
     url = 'http://selenium:4444/wd/hub'
@@ -27,6 +28,14 @@ def skip_alert_pop_windows_if_present(driver):
     except:
         return False
 
+get_wrapper_date = datetime.datetime.now()
+def get_wrapper(driver, url):
+    global get_wrapper_date
+    delta = datetime.datetime.now() - get_wrapper_date
+    if delta.total_seconds() < 2:
+        time.sleep(2)
+    driver.get(url)
+    get_wrapper_date = datetime.datetime.now()
 
 def main():
     logger.info("start")
@@ -35,7 +44,7 @@ def main():
     ##
     ## Locate <div> '全部商品分類'
     ##
-    driver.get("https://tw.buy.yahoo.com/help/helper.asp?p=sitemap")
+    get_wrapper(driver, "https://tw.buy.yahoo.com/help/helper.asp?p=sitemap")
     category_all = driver.find_elements_by_xpath("//*[text()='全部商品分類']")
 
     if len(category_all) != 2:
@@ -87,7 +96,7 @@ def main():
         try:
             logger.debug("layer_2_category: [%s]", layer_2_category["name"])
             logger.debug("Get URL: [%s]", layer_2_category["link"])
-            driver.get(layer_2_category["link"])
+            get_wrapper(driver, layer_2_category["link"])
 
             sitelists = driver.find_elements_by_class_name("sitelist")
             for sitelist in sitelists:
@@ -139,7 +148,7 @@ def main():
     for layer_4_category in layer_4_info:
         logger.debug("layer_4_category: [%s]", layer_4_category["name"])
         logger.debug("Get URL: [%s]", layer_4_category["link"])
-        driver.get(layer_4_category["link"])
+        get_wrapper(driver, layer_4_category["link"])
 
         near_hot = None
         try:
