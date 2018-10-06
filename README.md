@@ -12,7 +12,7 @@
   * `cd juvo-interview`
 * Build & Run
   * `docker-compose up --build --abort-on-container-exit`
-* After 5~30 minutes, see `output.csv`.
+* When it finished, see `output.csv`.
 
 ## Monitor
 
