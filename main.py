@@ -131,5 +131,39 @@ def main():
             logger.warning("Failed to get layer 4 info from [%s]", layer_3_category["name"])
         # break ## debug
 
+    ##
+    ## Collect item info
+    ##
+    item_info = []
+    for layer_4_category in layer_4_info:
+        logger.debug("layer_4_category: [%s]", layer_4_category["name"])
+        logger.debug("Get URL: [%s]", layer_4_category["link"])
+        driver.get(layer_4_category["link"])
+
+        near_hot = None
+        try:
+            near_hot = driver.find_element_by_xpath("//*[text()='近期熱銷']")
+        except:
+            logger.warning("Missing '近期熱銷' in [%s]", layer_4_category["name"])
+            continue
+        near_hot = near_hot.find_element_by_xpath("..") ## get parent
+        link = near_hot.get_attribute("href")
+        logger.debug("Get URL: [%s]", link)
+        driver.get(link)
+
+        items = driver.find_elements_by_class_name("wrap")
+        for item in items:
+            title = item.find_element_by_class_name("srp-pdtitle")
+            price = item.find_element_by_xpath("//span[@class='srp-listprice-class']")
+
+            logger.info("Item: [%s] [%s] [%s]", layer_4_category["name"], title.text, price.text)
+
+            item_info.append({
+                "parent": layer_4_category["name"],
+                "name": title,
+                "price": price
+            })
+
+
 if __name__ == "__main__":
     main()
