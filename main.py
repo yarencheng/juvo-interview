@@ -116,7 +116,17 @@ def main():
             logger.debug("layer_3_category: [%s]", layer_3_category["name"])
             lists = layer_3_category["element"].find_elements_by_class_name("list")
             for l in lists:
+                if len(l.text) == 0:
+                    continue
                 logger.info("Get layer 4 category: [%s]", l.text)
+                link = l.find_element_by_css_selector("*").get_attribute("href")
+
+                layer_4_info.append({
+                    "parent": layer_3_category["name"],
+                    "name": l.text,
+                    "element": l,
+                    "link": link,
+                })
         except:
             logger.warning("Failed to get layer 4 info from [%s]", layer_3_category["name"])
         # break ## debug
