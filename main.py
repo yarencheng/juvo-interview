@@ -98,7 +98,7 @@ def main():
 
                 logger.info("Get layer 3 category: [%s]", title.text)
                 layer_3_info.append({
-                    "parent": layer_2_category["name"],
+                    "parent": layer_2_category,
                     "name": title.text,
                     "element": sitelist
                 })
@@ -123,7 +123,7 @@ def main():
                 link = l.find_element_by_css_selector("*").get_attribute("href")
 
                 layer_4_info.append({
-                    "parent": layer_3_category["name"],
+                    "parent": layer_3_category,
                     "name": l.text,
                     "element": l,
                     "link": link,
@@ -160,7 +160,7 @@ def main():
             logger.info("Item: [%s] [%s] [%s]", layer_4_category["name"], title.text, price.text)
 
             item_info.append({
-                "parent": layer_4_category["name"],
+                "parent": layer_4_category,
                 "name": title,
                 "price": price
             })
@@ -168,11 +168,20 @@ def main():
     ##
     ## Dump to csv
     ##
+    logger.info("dump to output.csv")
+    with open('output/output.csv', 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(['category_1', 'category_2', 'category_3', 'category_4', 'item', 'price'])
+        for item in item_info:
+            writer.writerow([
+                item["parent"]["parent"]["parent"]["parent"]["name"],
+                item["parent"]["parent"]["parent"]["name"],
+                item["parent"]["parent"]["name"],
+                item["parent"]["name"],
+                item["name"],
+                item["price"]
+            ])
+
 
 if __name__ == "__main__":
-    # main()
-    with open('result.csv', 'w', newline='') as csvfile:
-        writer = csv.writer(csvfile)
-        writer.writerow(['姓名', '身高', '體重'])
-        writer.writerow(['令狐沖', 175, 60])
-        writer.writerow(['岳靈珊', 165, 57])
+    main()

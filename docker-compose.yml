@@ -4,6 +4,8 @@ services:
     build: .
     links:
      - "selenium:selenium"
+    volumes:
+     - .:/workdir/output
   selenium:
     image: "selenium/standalone-chrome-debug"
   vnc-client:
