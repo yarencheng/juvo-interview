@@ -64,11 +64,12 @@ def main():
     zones = category_all.find_elements_by_class_name("zone")
     for zone in zones:
         title = zone.find_element_by_class_name("title")
-        logger.info("Get layer 1 category: [%s]", title.text)
+        logger.info("Category: [%s]", title.text)
         layer_1_info.append({
             "name": title.text,
             "element": zone
         })
+        # break ## debug
 
     ##
     ## Collect layer 2 category
@@ -77,7 +78,7 @@ def main():
     for layer_1_category in layer_1_info:
         layer_2_categories = layer_1_category["element"].find_elements_by_class_name("site-list")
         for site in layer_2_categories:
-            logger.info("Get layer 2 category: [%s]", site.text)
+            logger.info("Category: [%s][%s]", layer_1_category["name"], site.text)
 
             link = site.find_element_by_css_selector("*").get_attribute("href")
 
@@ -87,108 +88,91 @@ def main():
                 "element": site,
                 "link": link,
             })
+        # break ## debug
 
     ##
     ## Collect layer 3 category
     ##
-    layer_3_info = []
+    layer_4_info = []
     for layer_2_category in layer_2_info:
+        sitelist = []
         try:
             logger.debug("layer_2_category: [%s]", layer_2_category["name"])
             logger.debug("Get URL: [%s]", layer_2_category["link"])
             get_wrapper(driver, layer_2_category["link"])
 
             sitelists = driver.find_elements_by_class_name("sitelist")
-            for sitelist in sitelists:
-                try:
-                    title = sitelist.find_element_by_class_name("stitle")
-                except:
-                    continue
-
-                logger.info("Get layer 3 category: [%s]", title.text)
-                layer_3_info.append({
-                    "parent": layer_2_category,
-                    "name": title.text,
-                    "element": sitelist
-                })
         except:
             logger.warning("Failed to get layer 3 info from [%s]", layer_2_category["name"])
             skip_alert_pop_windows_if_present(driver)
 
-        # break ## debug
+        for sitelist in sitelists:
+            try:
+                title = sitelist.find_element_by_class_name("stitle")
+                logger.info("Category: [%s][%s][%s]", layer_2_category["parent"]["name"], layer_2_category["name"], title.text)
 
-    ##
-    ## Collect layer 4 category
-    ##
-    layer_4_info = []
-    for layer_3_category in layer_3_info:
-        try:
-            logger.debug("layer_3_category: [%s]", layer_3_category["name"])
-            lists = layer_3_category["element"].find_elements_by_class_name("list")
+            except:
+                continue
+
+            ##
+            ## Collect layer 4 category
+            ##
+            lists = sitelist.find_elements_by_class_name("list")
             for l in lists:
                 if len(l.text) == 0:
                     continue
-                logger.info("Get layer 4 category: [%s]", l.text)
+                logger.info("Category: [%s][%s][%s][%s]", layer_2_category["parent"]["name"], layer_2_category["name"], title.text, l.text)
                 link = l.find_element_by_css_selector("*").get_attribute("href")
 
                 layer_4_info.append({
-                    "parent": layer_3_category,
+                    "parent": {
+                        "parent": layer_2_category,
+                        "name": title.text,
+                    },
                     "name": l.text,
                     "element": l,
                     "link": link,
                 })
-        except:
-            logger.warning("Failed to get layer 4 info from [%s]", layer_3_category["name"])
+
         # break ## debug
 
     ##
     ## Collect item info
     ##
-    item_info = []
-    for layer_4_category in layer_4_info:
-        logger.debug("layer_4_category: [%s]", layer_4_category["name"])
-        logger.debug("Get URL: [%s]", layer_4_category["link"])
-        get_wrapper(driver, layer_4_category["link"])
-
-        near_hot = None
-        try:
-            near_hot = driver.find_element_by_xpath("//*[text()='近期熱銷']")
-        except:
-            logger.warning("Missing '近期熱銷' in [%s]", layer_4_category["name"])
-            continue
-        near_hot = near_hot.find_element_by_xpath("..") ## get parent
-        link = near_hot.get_attribute("href")
-        logger.debug("Get URL: [%s]", link)
-        driver.get(link)
-
-        items = driver.find_elements_by_class_name("wrap")
-        for item in items:
-            title = item.find_element_by_class_name("srp-pdtitle")
-
-            logger.info("Item: [%s] [%s]", layer_4_category["name"], title.text)
-
-            item_info.append({
-                "parent": layer_4_category,
-                "name": title.text
-            })
-
-    ##
-    ## Dump to csv
-    ##
-    logger.info("dump to output.csv")
     with open('output/output.csv', 'w', encoding='utf-8', newline='') as csvfile:
         writer = csv.writer(csvfile)
         writer.writerow(['category_1', 'category_2', 'category_3', 'category_4', 'item'])
 
-        for item in item_info:
-            writer.writerow([
-                item["parent"]["parent"]["parent"]["parent"]["name"],
-                item["parent"]["parent"]["parent"]["name"],
-                item["parent"]["parent"]["name"],
-                item["parent"]["name"],
-                item["name"]
-            ])
+        for layer_4_category in layer_4_info:
+            logger.debug("layer_4_category: [%s]", layer_4_category["name"])
+            logger.debug("Get URL: [%s]", layer_4_category["link"])
+            get_wrapper(driver, layer_4_category["link"])
 
+            near_hot = None
+            try:
+                near_hot = driver.find_element_by_xpath("//*[text()='近期熱銷']")
+            except:
+                logger.warning("Missing '近期熱銷' in [%s]", layer_4_category["name"])
+                continue
+            near_hot = near_hot.find_element_by_xpath("..") ## get parent
+            link = near_hot.get_attribute("href")
+            logger.debug("Get URL: [%s]", link)
+            get_wrapper(driver, link)
+
+            items = driver.find_elements_by_class_name("wrap")
+            for item in items:
+                title = item.find_element_by_class_name("srp-pdtitle")
+
+                logger.info("Product: [%s] [%s]", layer_4_category["name"], title.text)
+
+                writer.writerow([
+                    layer_4_category["parent"]["parent"]["parent"]["name"],
+                    layer_4_category["parent"]["parent"]["name"],
+                    layer_4_category["parent"]["name"],
+                    layer_4_category["name"],
+                    title.text
+                ])
+            # break ## debug
 
 if __name__ == "__main__":
     main()
