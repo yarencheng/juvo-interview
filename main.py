@@ -17,29 +17,17 @@ def get_driver():
             logger.warning("Connect to selenium failed. Sleep 1 seconds and try again")
             time.sleep(1)
 
-def main():
-    """
-    [{
-        name: "服裝 / 飾品 / 配件",              // layer 1 category
-        sub_categories: [{
-            name: "流行女裝",                   // layer 2 category
-            link: "http://...",
-            sub_categories: [{
-                name: "換季必備外套",            // layer 3 category
-                link: "http://...",
-                sub_categories: [{
-                    name: "風衣外套",           // layer 4 category
-                    link: "http://...",
-                    hot_items: [{
-                        "product_name": "aaa", "product_price": "123"
-                    }, ... ]
-                }, ... ]
-            }, ... ]
-        }, ... ]
-    }, ... ]
-    """
-    hot_sale_info = []
+def skip_alert_pop_windows_if_present(driver):
+    try:
+        a1 = driver.switch_to.alert
+        logger.warning("Get alert: [%s]", a1.text)
+        a1.accept()
+        return True
+    except:
+        return False
 
+
+def main():
     logger.info("start")
     driver = get_driver()
 
@@ -62,21 +50,76 @@ def main():
     ###
     ### Collect layer 1 category
     ###
-    layer_1_categories = category_all.find_elements_by_class_name("zone")
-    for zone in layer_1_categories:
+    layer_1_info = []
+    zones = category_all.find_elements_by_class_name("zone")
+    for zone in zones:
         title = zone.find_element_by_class_name("title")
         logger.info("Get layer 1 category: [%s]", title.text)
-        hot_sale_info.append({
-            "name": title.text
+        layer_1_info.append({
+            "name": title.text,
+            "element": zone
         })
 
     ##
     ## Collect layer 2 category
     ##
-    for layer_1_category in layer_1_categories:
-        layer_2_categories = layer_1_category.find_elements_by_class_name("site-list")
+    layer_2_info = []
+    for layer_1_category in layer_1_info:
+        layer_2_categories = layer_1_category["element"].find_elements_by_class_name("site-list")
         for site in layer_2_categories:
             logger.info("Get layer 2 category: [%s]", site.text)
+
+            link = site.find_element_by_css_selector("*").get_attribute("href")
+
+            layer_2_info.append({
+                "parent": layer_1_category["name"],
+                "name": title.text,
+                "element": site,
+                "link": link,
+            })
+
+    ##
+    ## Collect layer 3 category
+    ##
+    layer_3_info = []
+    for layer_2_category in layer_2_info:
+        try:
+            logger.debug("layer_2_category: [%s]", layer_2_category["name"])
+            logger.debug("Get URL: [%s]", layer_2_category["link"])
+            driver.get(layer_2_category["link"])
+
+            sitelists = driver.find_elements_by_class_name("sitelist")
+            for sitelist in sitelists:
+                try:
+                    title = sitelist.find_element_by_class_name("stitle")
+                except:
+                    continue
+
+                logger.info("Get layer 3 category: [%s]", title.text)
+                layer_3_info.append({
+                    "parent": layer_2_category["name"],
+                    "name": title.text,
+                    "element": sitelist
+                })
+        except:
+            logger.warning("Failed to get layer 3 info from [%s]", layer_2_category["name"])
+            skip_alert_pop_windows_if_present(driver)
+
+        # break ## debug
+
+    ##
+    ## Collect layer 4 category
+    ##
+    layer_4_info = []
+    for layer_3_category in layer_3_info:
+        try:
+            logger.debug("layer_3_category: [%s]", layer_3_category["name"])
+            lists = layer_3_category["element"].find_elements_by_class_name("list")
+            for l in lists:
+                logger.info("Get layer 4 category: [%s]", l.text)
+        except:
+            logger.warning("Failed to get layer 4 info from [%s]", layer_3_category["name"])
+        # break ## debug
 
 if __name__ == "__main__":
     main()
